@@ -1,4 +1,4 @@
-<p align="center"><img src="brand/openwear-icon-512.png" width="112" alt="OpenWear logo"></p>
+<p align="center"><img src="brand/promo/banner.png" alt="OpenWear: your Xiaomi band, without the cloud"></p>
 
 <h1 align="center">OpenWear</h1>
 
@@ -34,6 +34,25 @@ OpenWear talks to the band directly over Bluetooth, using the band's own protoco
 - Health files and band screenshots are encrypted on the phone (AES-256-GCM)
 - HTTPS only. User-installed certificates aren't trusted, and nothing is included in phone backups.
 - A Xiaomi account is needed only once, to pair. Your password goes only to Xiaomi and is never stored.
+
+## Screenshots
+
+<p align="center"><img src="brand/promo/health.png" alt="Today, heart rate and sleep screens"></p>
+<p align="center"><img src="brand/promo/band.png" alt="Watch faces, band settings and health screens"></p>
+<p align="center"><img src="brand/promo/light-and-dark.png" alt="Light and dark themes"></p>
+
+<details>
+<summary>All screens</summary>
+
+| Today | Health | Faces |
+|---|---|---|
+| <img src="brand/screens/today-dark.png" width="240"> | <img src="brand/screens/health-dark.png" width="240"> | <img src="brand/screens/faces-dark.png" width="240"> |
+| **Heart rate** | **Sleep** | **Settings** |
+| <img src="brand/screens/heart-rate-dark.png" width="240"> | <img src="brand/screens/sleep-dark.png" width="240"> | <img src="brand/screens/settings-dark.png" width="240"> |
+
+</details>
+
+The screenshots use made-up sample data. To regenerate them, run `flutter test tool/screenshots_test.dart` in `app/`, then `python3 brand/make_promo.py`.
 
 ## Supported devices
 

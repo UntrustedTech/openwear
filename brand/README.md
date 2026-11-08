@@ -11,3 +11,8 @@ A band outline with an orange pulse running through it and out the other side, o
 - **Masters:** `openwear-icon.svg`, `openwear-icon-512.png` and `openwear-icon-full-1024.png`.
 
 The in-app logo (`app/lib/ui/widgets/openwear_logo.dart`) paints the same geometry. Keep the two in step.
+
+## Screenshots and promo images
+
+- `screens/`: the app's real screens, rendered in light and dark from sample data by `app/tool/screenshots_test.dart` (`cd app && flutter test tool/screenshots_test.dart`).
+- `promo/`: the README banner and feature images, built from `screens/` by `make_promo.py` (`python3 brand/make_promo.py`).
