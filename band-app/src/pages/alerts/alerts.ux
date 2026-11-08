@@ -1,0 +1,56 @@
+<template>
+  <div class="page">
+    <scroll class="list" scroll-y="true">
+      <text class="title">Alerts</text>
+      <text class="note" if="{{ notes.length === 0 }}">No notifications</text>
+      <div class="item" for="{{ notes }}" onclick="open($idx)">
+        <text class="item-title">{{ $item.ti || $item.a }}</text>
+        <text class="item-sub">{{ $item.tx }}</text>
+        <text class="item-sub">{{ $item.a }} · {{ $item.when }}</text>
+      </div>
+    </scroll>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+import fmt from '../../common/format.js'
+
+export default {
+  private: {
+    notes: [],
+    onState: null
+  },
+  onInit() {
+    var self = this
+    this.onState = function (m) {
+      if (m.t === 'state') self.show(m)
+    }
+    this.$app.$def.listen(this.onState)
+    var s = this.$app.$def.getState()
+    if (s) this.show(s)
+    this.$app.$def.refresh()
+  },
+  onDestroy() {
+    this.$app.$def.unlisten(this.onState)
+  },
+  show(s) {
+    var list = s.notes || []
+    var out = []
+    for (var i = list.length - 1; i >= 0; i--) {
+      var n = list[i]
+      out.push({ k: n.k, a: n.a || '', ti: n.ti || '', tx: n.tx || '', r: !!n.r, when: n.at ? fmt.ago(n.at) : '' })
+    }
+    this.notes = out
+  },
+  open(i) {
+    var n = this.notes[i]
+    if (!n) return
+    router.push({ uri: '/pages/note', params: { k: n.k, a: n.a, ti: n.ti, tx: n.tx, r: n.r ? '1' : '0' } })
+  }
+}
+</script>
+
+<style>
+@import '../../common/style.css';
+</style>

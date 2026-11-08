@@ -1,0 +1,33 @@
+<template>
+  <div class="page">
+    <scroll class="list" scroll-y="true">
+      <text class="title">Tools</text>
+      <div class="item" onclick="open('interval')">
+        <text class="item-title">Interval timer</text>
+        <text class="item-sub">Work and rest rounds</text>
+      </div>
+      <div class="item" onclick="open('breathe')">
+        <text class="item-title">Breathe</text>
+        <text class="item-sub">Slow breathing pacer</text>
+      </div>
+      <div class="item" onclick="open('countdown')">
+        <text class="item-title">Countdowns</text>
+        <text class="item-sub">Days until a date</text>
+      </div>
+    </scroll>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+
+export default {
+  open(name) {
+    router.push({ uri: '/pages/' + name })
+  }
+}
+</script>
+
+<style>
+@import '../../common/style.css';
+</style>

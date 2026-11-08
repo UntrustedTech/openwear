@@ -1,0 +1,83 @@
+<template>
+  <div class="page">
+    <scroll class="list" scroll-y="true">
+      <text class="title">Phone</text>
+      <div class="btn {{ ringing ? 'btn-red' : '' }}" onclick="find">
+        <text class="btn-text">{{ ringing ? 'Stop ringing' : 'Find phone' }}</text>
+      </div>
+      <div class="btn btn-alt" onclick="cmd('sync')">
+        <text class="btn-text">Sync now</text>
+      </div>
+      <div class="btn btn-alt" onclick="cmd('weather')">
+        <text class="btn-text">Send weather</text>
+      </div>
+      <text class="note">{{ status }}</text>
+    </scroll>
+  </div>
+</template>
+
+<script>
+import vibrator from '@system.vibrator'
+
+var NAMES = {
+  findPhone: 'Ringing phone',
+  stopFindPhone: 'Stopped',
+  sync: 'Synced',
+  weather: 'Weather sent'
+}
+
+export default {
+  private: {
+    ringing: false,
+    status: '',
+    onMsg: null,
+    stopTimer: null
+  },
+  onInit() {
+    var self = this
+    this.onMsg = function (m) {
+      if (m.t === 'ack') self.ack(m)
+    }
+    this.$app.$def.listen(this.onMsg)
+  },
+  onDestroy() {
+    this.$app.$def.unlisten(this.onMsg)
+    if (this.stopTimer) clearTimeout(this.stopTimer)
+  },
+  send(c) {
+    var sent = this.$app.$def.send({ t: 'cmd', c: c })
+    this.status = sent ? 'Asking the phone…' : 'Phone not linked'
+    return sent
+  },
+  find() {
+    var self = this
+    if (this.ringing) {
+      this.ringing = false
+      this.send('stopFindPhone')
+      return
+    }
+    if (!this.send('findPhone')) return
+    this.ringing = true
+    // The phone stops by itself after 30 s.
+    if (this.stopTimer) clearTimeout(this.stopTimer)
+    this.stopTimer = setTimeout(function () { self.ringing = false }, 30000)
+  },
+  cmd(c) {
+    this.send(c)
+  },
+  ack(m) {
+    if (m.c === 'reply') return
+    if (m.ok) {
+      this.status = NAMES[m.c] || 'Done'
+    } else {
+      this.status = m.m || 'Failed'
+      if (m.c === 'findPhone') this.ringing = false
+    }
+    vibrator.vibrate({ mode: 'short' })
+  }
+}
+</script>
+
+<style>
+@import '../../common/style.css';
+</style>

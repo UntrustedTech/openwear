@@ -1,0 +1,165 @@
+<template>
+  <div class="page">
+    <scroll class="list" scroll-y="true">
+      <block if="{{ !adding }}">
+        <text class="title">Countdowns</text>
+        <text class="note" if="{{ items.length === 0 }}">None yet</text>
+        <div class="item" for="{{ items }}" onlongpress="remove($idx)">
+          <text class="item-title">{{ $item.name }}</text>
+          <text class="days">{{ $item.left }}</text>
+          <text class="item-sub">{{ $item.date }}</text>
+        </div>
+        <div class="btn" onclick="add"><text class="btn-text">Add</text></div>
+        <text class="note" if="{{ items.length > 0 }}">Hold one to delete it</text>
+      </block>
+      <block else>
+        <text class="title">New</text>
+        <div class="row stepper">
+          <div class="step" onclick="name(-1)"><text class="btn-text">‹</text></div>
+          <text class="step-value">{{ names[nameIdx] }}</text>
+          <div class="step" onclick="name(1)"><text class="btn-text">›</text></div>
+        </div>
+        <block for="{{ parts }}">
+          <text class="item-sub">{{ $item.label }}</text>
+          <div class="row stepper">
+            <div class="step" onclick="shift($idx, -1)"><text class="btn-text">-</text></div>
+            <text class="step-value">{{ $item.text }}</text>
+            <div class="step" onclick="shift($idx, 1)"><text class="btn-text">+</text></div>
+          </div>
+        </block>
+        <div class="btn" onclick="save"><text class="btn-text">Save</text></div>
+        <div class="btn btn-alt" onclick="cancel"><text class="btn-text">Cancel</text></div>
+      </block>
+    </scroll>
+  </div>
+</template>
+
+<script>
+import storage from '@system.storage'
+import vibrator from '@system.vibrator'
+
+var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+var DAY_MS = 86400000
+var MAX_ITEMS = 10
+
+function midnight(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+}
+
+function label(d) {
+  return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear()
+}
+
+export default {
+  private: {
+    saved: [],
+    items: [],
+    adding: false,
+    names: ['Birthday', 'Holiday', 'Trip', 'Event', 'Deadline', 'Anniversary', 'Exam', 'Payday'],
+    nameIdx: 0,
+    pick: null,
+    parts: []
+  },
+  onInit() {
+    var self = this
+    storage.get({
+      key: 'countdowns',
+      success: function (v) {
+        try {
+          var list = JSON.parse(v || '[]')
+          self.saved = list instanceof Array ? list : []
+        } catch (e) {
+          self.saved = []
+        }
+        self.render()
+      }
+    })
+  },
+  render() {
+    var today = midnight(new Date()).getTime()
+    var out = []
+    for (var i = 0; i < this.saved.length; i++) {
+      var s = this.saved[i]
+      var d = new Date(s.d)
+      var days = Math.round((midnight(d).getTime() - today) / DAY_MS)
+      var left = days === 0 ? 'Today' : days > 0
+        ? days + (days === 1 ? ' day' : ' days')
+        : -days + (days === -1 ? ' day ago' : ' days ago')
+      out.push({ name: s.n, left: left, date: label(d) })
+    }
+    this.items = out
+  },
+  store() {
+    storage.set({ key: 'countdowns', value: JSON.stringify(this.saved) })
+  },
+  add() {
+    if (this.saved.length >= MAX_ITEMS) {
+      vibrator.vibrate({ mode: 'long' })
+      return
+    }
+    this.pick = midnight(new Date(Date.now() + 7 * DAY_MS))
+    this.nameIdx = 0
+    this.showPick()
+    this.adding = true
+  },
+  showPick() {
+    var d = this.pick
+    this.parts = [
+      { label: 'Day', text: String(d.getDate()) },
+      { label: 'Month', text: MONTHS[d.getMonth()] },
+      { label: 'Year', text: String(d.getFullYear()) }
+    ]
+  },
+  name(dir) {
+    var n = this.names.length
+    this.nameIdx = (this.nameIdx + dir + n) % n
+  },
+  shift(i, dir) {
+    var d = this.pick
+    var y = d.getFullYear()
+    var m = d.getMonth()
+    var day = d.getDate()
+    if (i === 0) {
+      this.pick = new Date(d.getTime() + dir * DAY_MS)
+      this.pick = midnight(this.pick)
+    } else {
+      if (i === 1) m += dir
+      else y += dir
+      var last = new Date(y, m + 1, 0).getDate()
+      this.pick = new Date(y, m, Math.min(day, last))
+    }
+    this.showPick()
+  },
+  save() {
+    var list = this.saved.slice()
+    list.push({ n: this.names[this.nameIdx], d: this.pick.getTime() })
+    list.sort(function (a, b) { return a.d - b.d })
+    this.saved = list
+    this.store()
+    this.adding = false
+    this.render()
+  },
+  cancel() {
+    this.adding = false
+  },
+  remove(i) {
+    var list = this.saved.slice()
+    list.splice(i, 1)
+    this.saved = list
+    this.store()
+    this.render()
+    vibrator.vibrate({ mode: 'short' })
+  }
+}
+</script>
+
+<style>
+@import '../../common/style.css';
+.days { font-size: 32px; color: #a78bfa; }
+.stepper { margin: 4px 0 10px 0; }
+.step {
+  width: 44px; height: 52px; border-radius: 22px;
+  background-color: #2a2838; justify-content: center; align-items: center;
+}
+.step-value { font-size: 22px; color: #ffffff; }
+</style>

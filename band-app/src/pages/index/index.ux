@@ -1,0 +1,79 @@
+<template>
+  <div class="page">
+    <scroll class="list" scroll-y="true">
+      <text class="time">{{ time }}</text>
+      <text class="link {{ linked ? 'on' : 'off' }}">{{ linked ? 'Phone linked' : 'Phone not linked' }}</text>
+      <div class="item" onclick="open('today')">
+        <text class="item-title">Today</text>
+        <text class="item-sub">{{ steps }} steps</text>
+      </div>
+      <div class="item" onclick="open('alerts')">
+        <text class="item-title">Alerts</text>
+        <text class="item-sub">{{ alerts }}</text>
+      </div>
+      <div class="item" onclick="open('phone')">
+        <text class="item-title">Phone</text>
+        <text class="item-sub">Find, sync, weather</text>
+      </div>
+      <div class="item" onclick="open('tools')">
+        <text class="item-title">Tools</text>
+        <text class="item-sub">Timer, breathe, days</text>
+      </div>
+    </scroll>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+import fmt from '../../common/format.js'
+
+export default {
+  private: {
+    time: '--:--',
+    linked: false,
+    steps: '--',
+    alerts: 'None',
+    timer: null,
+    onState: null
+  },
+  onInit() {
+    var self = this
+    this.onState = function (m) {
+      if (m.t === 'state') self.show(m)
+    }
+    this.$app.$def.listen(this.onState)
+    var s = this.$app.$def.getState()
+    if (s) this.show(s)
+    this.tick()
+    this.timer = setInterval(function () { self.tick() }, 1000)
+  },
+  onShow() {
+    this.$app.$def.refresh()
+  },
+  onDestroy() {
+    if (this.timer) clearInterval(this.timer)
+    this.$app.$def.unlisten(this.onState)
+  },
+  tick() {
+    this.time = fmt.clock(new Date())
+  },
+  show(s) {
+    var now = Math.floor(Date.now() / 1000)
+    this.linked = !!s.now && now - s.now < 120
+    this.steps = fmt.num(s.steps)
+    var n = s.notes ? s.notes.length : 0
+    this.alerts = n === 0 ? 'None' : n === 1 ? '1 new' : n + ' new'
+  },
+  open(name) {
+    router.push({ uri: '/pages/' + name })
+  }
+}
+</script>
+
+<style>
+@import '../../common/style.css';
+.time { font-size: 48px; color: #ffffff; margin-top: 24px; text-align: center; width: 100%; }
+.link { font-size: 18px; text-align: center; width: 100%; margin-bottom: 12px; }
+.on { color: #4ade80; }
+.off { color: #8a8a99; }
+</style>

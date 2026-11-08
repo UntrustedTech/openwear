@@ -1,0 +1,28 @@
+# Build output
+build/
+.dart_tool/
+debug-info/
+dist/
+node_modules/
+.gradle/
+.kotlin/
+*.iml
+.idea/
+.flutter-plugins-dependencies
+GeneratedPluginRegistrant.java
+local.properties
+
+# Signing keys and secrets: never commit
+key.properties
+*.jks
+*.keystore
+.env
+.env.*
+
+# Xiaomi-owned material and personal captures: never publish
+re/
+Original APK/
+proto/state/
+proto/logs/
+*.pcap
+*.btsnoop

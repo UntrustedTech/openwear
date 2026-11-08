@@ -1,0 +1,52 @@
+<template>
+  <div class="page">
+    <scroll class="list" scroll-y="true">
+      <text class="title">{{ ti || a }}</text>
+      <text class="body">{{ tx }}</text>
+      <text class="item-sub">{{ a }}</text>
+      <block if="{{ canReply }}">
+        <div class="btn btn-alt" for="{{ replies }}" onclick="reply($item)">
+          <text class="btn-text">{{ $item }}</text>
+        </div>
+      </block>
+      <text class="note">{{ status }}</text>
+    </scroll>
+  </div>
+</template>
+
+<script>
+import vibrator from '@system.vibrator'
+
+export default {
+  public: { k: '', a: '', ti: '', tx: '', r: '0' },
+  private: {
+    canReply: false,
+    replies: ['OK', 'On my way', 'Can\'t talk now', 'Thanks!', 'Call you later'],
+    status: '',
+    onMsg: null
+  },
+  onInit() {
+    var self = this
+    this.canReply = this.r === '1' || this.r === true
+    this.onMsg = function (m) {
+      if (m.t === 'ack' && m.c === 'reply') {
+        self.status = m.ok ? 'Sent' : (m.m || 'Could not reply')
+        vibrator.vibrate({ mode: 'short' })
+      }
+    }
+    this.$app.$def.listen(this.onMsg)
+  },
+  onDestroy() {
+    this.$app.$def.unlisten(this.onMsg)
+  },
+  reply(text) {
+    var sent = this.$app.$def.send({ t: 'reply', k: this.k, x: text })
+    this.status = sent ? 'Sending…' : 'Phone not linked'
+  }
+}
+</script>
+
+<style>
+@import '../../common/style.css';
+.body { font-size: 22px; color: #ffffff; margin: 8px 0; }
+</style>

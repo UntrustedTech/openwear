@@ -1,0 +1,83 @@
+<template>
+  <div class="page center">
+    <text class="phase">{{ phase }}</text>
+    <div class="circle-box">
+      <div class="circle" style="width: {{ size }}px; height: {{ size }}px; border-radius: {{ size / 2 }}px;"></div>
+    </div>
+    <text class="note">{{ info }}</text>
+    <div class="btn small" onclick="toggle"><text class="btn-text">{{ running ? 'Stop' : 'Start' }}</text></div>
+  </div>
+</template>
+
+<script>
+import vibrator from '@system.vibrator'
+
+// 4 s in, 6 s out: about six breaths a minute.
+var IN_S = 4
+var OUT_S = 6
+var MIN = 60
+var MAX = 160
+var TICK_MS = 100
+
+export default {
+  private: {
+    phase: 'Breathe',
+    size: 60,
+    info: '1 minute',
+    running: false,
+    t: 0,
+    timer: null
+  },
+  onDestroy() {
+    this.halt()
+  },
+  toggle() {
+    var self = this
+    if (this.running) {
+      this.halt()
+      this.phase = 'Breathe'
+      this.size = MIN
+      this.info = 'Done'
+      return
+    }
+    this.running = true
+    this.t = 0
+    this.timer = setInterval(function () { self.tick() }, TICK_MS)
+  },
+  tick() {
+    var total = 60
+    var cycle = IN_S + OUT_S
+    this.t += TICK_MS / 1000
+    if (this.t >= total) {
+      this.toggle()
+      vibrator.vibrate({ mode: 'long' })
+      return
+    }
+    var c = this.t % cycle
+    var wasIn = this.phase === 'In'
+    if (c < IN_S) {
+      this.phase = 'In'
+      this.size = Math.round(MIN + ((MAX - MIN) * c) / IN_S)
+    } else {
+      this.phase = 'Out'
+      this.size = Math.round(MAX - ((MAX - MIN) * (c - IN_S)) / OUT_S)
+    }
+    if (wasIn !== (this.phase === 'In')) vibrator.vibrate({ mode: 'short' })
+    this.info = Math.ceil(total - this.t) + ' s left'
+  },
+  halt() {
+    if (this.timer) clearInterval(this.timer)
+    this.timer = null
+    this.running = false
+  }
+}
+</script>
+
+<style>
+@import '../../common/style.css';
+.center { align-items: center; justify-content: center; }
+.phase { font-size: 30px; color: #a78bfa; }
+.circle-box { width: 170px; height: 170px; justify-content: center; align-items: center; margin: 16px 0; }
+.circle { background-color: #7c5cff; }
+.small { width: 150px; }
+</style>

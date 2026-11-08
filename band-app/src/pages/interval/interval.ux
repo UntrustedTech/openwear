@@ -1,0 +1,141 @@
+<template>
+  <div class="page">
+    <scroll class="list" scroll-y="true">
+      <block if="{{ !running }}">
+        <text class="title">Interval</text>
+        <block for="{{ fields }}">
+          <text class="item-sub">{{ $item.label }}</text>
+          <div class="row stepper">
+            <div class="step" onclick="change($idx, -1)"><text class="btn-text">-</text></div>
+            <text class="step-value">{{ $item.text }}</text>
+            <div class="step" onclick="change($idx, 1)"><text class="btn-text">+</text></div>
+          </div>
+        </block>
+        <div class="btn" onclick="start"><text class="btn-text">Start</text></div>
+      </block>
+      <block else>
+        <text class="title {{ phase === 'Work' ? 'work' : 'rest' }}">{{ phase }}</text>
+        <text class="big">{{ clock }}</text>
+        <text class="note">Round {{ round }} of {{ rounds }}</text>
+        <div class="btn btn-alt" onclick="pause"><text class="btn-text">{{ paused ? 'Resume' : 'Pause' }}</text></div>
+        <div class="btn btn-red" onclick="stop"><text class="btn-text">Stop</text></div>
+      </block>
+    </scroll>
+  </div>
+</template>
+
+<script>
+import vibrator from '@system.vibrator'
+import storage from '@system.storage'
+import fmt from '../../common/format.js'
+
+var STEPS = [5, 5, 1]
+var LIMITS = [[5, 600], [0, 600], [1, 50]]
+
+export default {
+  private: {
+    values: [30, 15, 8],
+    fields: [],
+    running: false,
+    paused: false,
+    phase: 'Work',
+    left: 0,
+    clock: '00:00',
+    round: 1,
+    rounds: 8,
+    timer: null
+  },
+  onInit() {
+    var self = this
+    this.render()
+    storage.get({
+      key: 'interval',
+      success: function (v) {
+        var parts = String(v || '').split(',')
+        if (parts.length === 3) {
+          self.values = [Number(parts[0]) || 30, Number(parts[1]) || 0, Number(parts[2]) || 8]
+          self.render()
+        }
+      }
+    })
+  },
+  onDestroy() {
+    this.clear()
+  },
+  render() {
+    var v = this.values
+    this.fields = [
+      { label: 'Work', text: fmt.mmss(v[0]) },
+      { label: 'Rest', text: fmt.mmss(v[1]) },
+      { label: 'Rounds', text: String(v[2]) }
+    ]
+  },
+  change(i, dir) {
+    var v = this.values.slice()
+    v[i] = Math.max(LIMITS[i][0], Math.min(LIMITS[i][1], v[i] + dir * STEPS[i]))
+    this.values = v
+    this.render()
+  },
+  start() {
+    var self = this
+    storage.set({ key: 'interval', value: this.values.join(',') })
+    this.rounds = this.values[2]
+    this.round = 1
+    this.enter('Work')
+    this.running = true
+    this.paused = false
+    this.clear()
+    this.timer = setInterval(function () { self.tick() }, 1000)
+  },
+  enter(phase) {
+    this.phase = phase
+    this.left = phase === 'Work' ? this.values[0] : this.values[1]
+    this.clock = fmt.mmss(this.left)
+  },
+  tick() {
+    if (this.paused) return
+    this.left -= 1
+    if (this.left > 0) {
+      this.clock = fmt.mmss(this.left)
+      if (this.left <= 3) vibrator.vibrate({ mode: 'short' })
+      return
+    }
+    if (this.phase === 'Work' && this.values[1] > 0) {
+      this.enter('Rest')
+      vibrator.vibrate({ mode: 'long' })
+      return
+    }
+    if (this.round >= this.rounds) {
+      vibrator.vibrate({ mode: 'long' })
+      this.stop()
+      return
+    }
+    this.round += 1
+    this.enter('Work')
+    vibrator.vibrate({ mode: 'long' })
+  },
+  pause() {
+    this.paused = !this.paused
+  },
+  stop() {
+    this.clear()
+    this.running = false
+  },
+  clear() {
+    if (this.timer) clearInterval(this.timer)
+    this.timer = null
+  }
+}
+</script>
+
+<style>
+@import '../../common/style.css';
+.stepper { margin: 4px 0 10px 0; }
+.step {
+  width: 52px; height: 52px; border-radius: 26px;
+  background-color: #2a2838; justify-content: center; align-items: center;
+}
+.step-value { font-size: 28px; color: #ffffff; }
+.work { color: #f59e0b; }
+.rest { color: #4ade80; }
+</style>

@@ -1,0 +1,31 @@
+{
+  "package": "org.openwear.band",
+  "name": "OpenWear",
+  "versionName": "0.2.1",
+  "versionCode": 3,
+  "minPlatformVersion": 1050,
+  "icon": "/logo.png",
+  "deviceTypeList": ["watch"],
+  "features": [
+    { "name": "system.router" },
+    { "name": "system.vibrator" },
+    { "name": "system.storage" },
+    { "name": "system.prompt" },
+    { "name": "system.interconnect" }
+  ],
+  "config": { "logLevel": "log", "designWidth": "device-width" },
+  "router": {
+    "entry": "pages/index",
+    "pages": {
+      "pages/index": { "component": "index" },
+      "pages/today": { "component": "today" },
+      "pages/phone": { "component": "phone" },
+      "pages/alerts": { "component": "alerts" },
+      "pages/note": { "component": "note" },
+      "pages/tools": { "component": "tools" },
+      "pages/interval": { "component": "interval" },
+      "pages/breathe": { "component": "breathe" },
+      "pages/countdown": { "component": "countdown" }
+    }
+  }
+}

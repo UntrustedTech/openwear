@@ -1,0 +1,100 @@
+<script>
+/**
+ * The link to OpenWear on the phone, shared by every page through
+ * this.$app.$def. Messages are JSON objects with a type `t` (see
+ * app/lib/services/band_app_link.dart on the phone).
+ * The band's JS engine has no optional chaining: keep to plain ES5-ish code.
+ */
+import interconnect from '@system.interconnect'
+import storage from '@system.storage'
+
+var connect = null
+var listeners = []
+var state = null
+
+function parse(raw) {
+  var p = raw
+  if (typeof p === 'string') {
+    try {
+      p = JSON.parse(p)
+    } catch (e) {
+      p = null
+    }
+  }
+  return p && typeof p === 'object' ? p : null
+}
+
+function emit(msg) {
+  for (var i = 0; i < listeners.length; i++) {
+    try {
+      listeners[i](msg)
+    } catch (e) {}
+  }
+}
+
+function send(msg) {
+  if (!connect) return false
+  try {
+    connect.send({ data: msg })
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+export default {
+  onCreate() {
+    storage.get({
+      key: 'state',
+      success: function (v) {
+        var saved = parse(v)
+        if (saved && !state) {
+          state = saved
+          emit(saved)
+        }
+      }
+    })
+    this.start()
+  },
+  start() {
+    if (connect) return
+    try {
+      connect = interconnect.instance()
+    } catch (e) {
+      connect = null
+      return
+    }
+    if (!connect) return
+    connect.onmessage = function (e) {
+      var m = parse(e && e.data !== undefined ? e.data : e)
+      if (!m) return
+      if (m.t === 'state') {
+        state = m
+        storage.set({ key: 'state', value: JSON.stringify(m) })
+      }
+      emit(m)
+    }
+    connect.onopen = function () {
+      send({ t: 'hello' })
+    }
+    connect.onclose = function () {}
+    connect.onerror = function () {}
+    send({ t: 'hello' })
+  },
+  send: send,
+  /** Asks the phone for fresh numbers. */
+  refresh() {
+    return send({ t: 'hello' })
+  },
+  listen(fn) {
+    listeners.push(fn)
+  },
+  unlisten(fn) {
+    var i = listeners.indexOf(fn)
+    if (i >= 0) listeners.splice(i, 1)
+  },
+  getState() {
+    return state
+  }
+}
+</script>
