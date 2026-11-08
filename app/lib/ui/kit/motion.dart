@@ -191,8 +191,9 @@ class _ShowOnActivateState extends State<ShowOnActivate>
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: _c,
     child: widget.child,
+    // Always the same widgets around the child, even when finished:
+    // swapping the wrapper in and out would remount the whole page.
     builder: (context, child) {
-      if (_c.value == 1) return child!;
       final t = Motion.ease.transform(_c.value);
       return Opacity(
         opacity: t,

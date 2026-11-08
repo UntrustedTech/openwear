@@ -303,15 +303,15 @@ class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: _t,
     child: widget.child,
-    builder: (context, child) => _t.value == 1
-        ? child!
-        : Opacity(
-            opacity: _t.value,
-            child: Transform.translate(
-              offset: Offset(0, 12 * (1 - _t.value)),
-              child: child,
-            ),
-          ),
+    // Always the same widgets around the child, even when finished:
+    // swapping the wrapper in and out would remount the card.
+    builder: (context, child) => Opacity(
+      opacity: _t.value,
+      child: Transform.translate(
+        offset: Offset(0, 12 * (1 - _t.value)),
+        child: child,
+      ),
+    ),
   );
 }
 
