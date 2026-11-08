@@ -1,6 +1,6 @@
 # Security
 
-Please **don't** open a public issue for a security problem. Use GitHub's private vulnerability reporting ("Report a vulnerability" on the Security tab), or contact the maintainers privately.
+Please **don't** open a public issue for a security problem. Use GitHub's private vulnerability reporting ("Report a vulnerability" on the Security tab), or email **support@untrustedtech.dev**.
 
 Useful details to include: your device and Android version, the OpenWear version (shown at the bottom of Settings), and the steps that reproduce the problem.
 
